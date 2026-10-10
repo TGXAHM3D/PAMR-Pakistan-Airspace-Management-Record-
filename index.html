@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAMR · Pakistan Airport Management Record</title>
+<title><small>Muhammad Ahmed Shahzad</small></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   PAMR — Design System
+   Theme: Aviation Control Tower  
+   Fonts: Share Tech Mono + Barlow Condensed
+═══════════════════════════════════════════════ */
+:root {
+  --navy:    #060e1e;
+  --navy2:   #0b1a30;
+  --navy3:   #0f2444;
+  --navy4:   #172d52;
+  --amber:   #f5a623;
+  --amber2:  #ffc857;
+  --amber3:  #fff0c0;
+  --cyan:    #00d4ff;
+  --cyan2:   #7ae8ff;
+  --green:   #00e676;
+  --green2:  #69f0ae;
+  --red:     #ff4444;
+  --red2:    #ff8a80;
+  --purple:  #bb86fc;
+  --gray:    #94a3b8;
+  --gray2:   #64748b;
+  --gray3:   #334155;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(245,166,35,0.25);
+  --glass:   rgba(255,255,255,0.03);
+  --mono:    'Oswald', monospace;
+  --sans:    'Smooch', sans-serif;
+  --cond:    'Barlow Condensed', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--sans);
+  background: var(--navy);
+  color: #e2e8f0;
+  display: flex; flex-direction: column; height: 100vh;
+}
+ 
+/* ── SCANLINE TEXTURE ──────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+  );
+}
+ 
+/* ── AIRPORT SELECTOR OVERLAY ─────────────────── */
+#overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: radial-gradient(ellipse at 30% 30%, #334155 0%, #060e1e 70%);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadein .4s ease;
+}
+#overlay.gone { display: none; }
+@keyframes fadein  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideup { from { opacity: 0; transform: translateY(30px) } to { opacity: 1; transform: none } }
+ 
+.sel-wrap { width: 100%; max-width: 780px; padding: 20px; animation: slideup .45s ease; }
+ 
+.sel-brand {
+  text-align: center; margin-bottom: 32px;
+}
+.sel-brand .logo-line {
+  font-family: var(--mono); font-size: 10px; color: var(--amber);
+  letter-spacing: .4em; margin-bottom: 12px; opacity: .7;
+}
+.sel-brand h1 {
+  font-family: var(--cond); font-size: 48px; font-weight: 700;
+  color: #fff; letter-spacing: .06em; line-height: 1;
+  text-shadow: 0 0 40px rgba(245,166,35,.4);
+}
+.sel-brand p {
+  font-family: var(--mono); font-size: 12px; color: var(--gray);
+  letter-spacing: .12em; margin-top: 8px;
+}
+ 
+.ap-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr));
+  gap: 8px; margin-bottom: 20px;
+}
+.ap-card {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 14px 14px 12px; cursor: pointer; position: relative;
+  background: var(--glass); transition: all .2s; overflow: hidden;
+}
+.ap-card::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--amber); transform: scaleY(0);
+  transition: transform .2s; transform-origin: bottom;
+}
+.ap-card:hover, .ap-card.sel {
+  border-color: rgba(245,166,35,.5);
+  background: rgba(245,166,35,.06);
+}
+.ap-card:hover::after, .ap-card.sel::after { transform: scaleY(1); }
+.ap-card.sel { border-color: var(--amber); }
+.ap-iata {
+  font-family: var(--mono); font-size: 22px; color: var(--amber);
+  font-weight: 400; letter-spacing: .05em;
+}
+.ap-name { font-family: var(--sans); font-size: 10px; color: #e2e8f0; margin: 4px 0 2px; line-height: 1.3; }
+.ap-city { font-family: var(--mono); font-size: 9px; color: var(--gray2); letter-spacing: .06em; }
+.ap-badge {
+  position: absolute; top: 10px; right: 10px;
+  font-family: var(--mono); font-size: 8px; letter-spacing: .06em;
+  padding: 2px 6px; border-radius: 2px;
+}
+.ap-intl { background: rgba(0,212,255,.12); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
+.ap-dom  { background: rgba(187,134,252,.12); color: var(--purple); border: 1px solid rgba(187,134,252,.2); }
+ 
+.sel-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--border); padding-top: 16px; gap: 12px;
+}
+.sel-chosen { font-family: var(--mono); font-size: 11px; color: var(--gray); }
+.sel-chosen span { color: var(--amber2); }
+.btn-enter {
+  font-family: var(--cond); font-size: 14px; font-weight: 600;
+  letter-spacing: .12em; padding: 10px 28px; border-radius: 4px;
+  border: 1px solid var(--amber); background: var(--amber); color: #000;
+  cursor: pointer; transition: all .2s;
+}
+.btn-enter:hover { background: var(--amber2); }
+.btn-enter:disabled { opacity: .3; cursor: not-allowed; }
+ 
+/* ── TOPBAR ────────────────────────────────────── */
+#topbar {
+  position: relative; z-index: 100;
+  background: var(--navy2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: stretch; flex-shrink: 0;
+}
+.tb-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px; border-right: 1px solid var(--border);
+  min-width: 260px;
+}
+.tb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.tb-name { font-family: var(--mono); font-size: 11px; color: var(--gray); letter-spacing: .08em; }
+ 
+.tab-btn {
+  font-family: var(--cond); font-size: 12px; font-weight: 600;
+  letter-spacing: .1em; padding: 0 20px; border: none; background: transparent;
+  color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all .2s;
+}
+.tab-btn:hover { color: #e2e8f0; background: var(--glass); }
+.tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+ 
+.tb-right {
+  margin-left: auto; display: flex; align-items: center; gap: 0;
+}
+.tb-clock {
+  font-family: var(--mono); font-size: 16px; color: var(--amber);
+  padding: 0 20px; border-left: 1px solid var(--border); letter-spacing: .08em;
+}
+.tb-db-status {
+  font-family: var(--mono); font-size: 10px; padding: 0 14px;
+  border-left: 1px solid var(--border); display: flex; align-items: center; gap: 6px;
+}
+.db-dot { width: 6px; height: 6px; border-radius: 50%; }
+.db-live  .db-dot { background: var(--green); }
+.db-demo  .db-dot { background: var(--amber); animation: pulse 2s infinite; }
+.db-error .db-dot { background: var(--red); }
+.db-live  span { color: var(--green); }
+.db-demo  span { color: var(--amber); }
+.db-error span { color: var(--red); }
+ 
+.tb-switch {
+  font-family: var(--mono); font-size: 10px; color: var(--gray);
+  padding: 0 14px; border-left: 1px solid var(--border);
+  cursor: pointer; transition: color .2s; display: flex; align-items: center; gap: 6px;
+}
+.tb-switch:hover { color: var(--amber); }
+.tb-iata { font-size: 14px; color: var(--amber2); font-weight: bold; }
+ 
+/* ── MAIN LAYOUT ───────────────────────────────── */
+#main { flex: 1; overflow: hidden; position: relative; z-index: 1; display: flex; flex-direction: column; }
+ 
+.panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.panel.active { display: flex; }
+ 
+/* ── FIDS PANEL ────────────────────────────────── */
+.fids-controls {
+  background: var(--navy2); border-bottom: 1px solid var(--border);
+  padding: 10px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.fids-label { font-family: var(--mono); font-size: 10px; color: var(--gray); letter-spacing: .1em; }
+.toggle-wrap { display: flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.tog {
+  font-family: var(--cond); font-size: 12px; font-weight: 600; letter-spacing: .1em;
+  padding: 6px 16px; border: none; cursor: pointer; background: transparent;
+  color: var(--gray); transition: all .15s;
+}
+.tog.active { background: var(--amber); color: #000; }
+ 
+.fids-body { flex: 1; overflow-y: auto; }
+.board-head {
+  display: grid; grid-template-columns: 90px 180px 1fr 90px 120px;
+  padding: 8px 20px; background: var(--navy3);
+  font-family: var(--mono); font-size: 10px; color: var(--gray2);
+  letter-spacing: .12em; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.fl-row {
+  display: grid; grid-template-columns: 90px 180px 1fr 90px 120px;
+  padding: 11px 20px; border-bottom: 1px solid var(--border);
+  align-items: center; transition: background .12s;
+}
+.fl-row:hover { background: var(--glass); }
+.fl-cs {
+  font-family: var(--mono); font-size: 15px; color: var(--amber2);
+  letter-spacing: .04em;
+}
+.fl-airline { font-family: var(--sans); font-size: 11px; color: var(--gray); }
+.fl-dest { font-family: var(--sans); font-size: 13px; color: #e2e8f0; }
+.fl-dest small { display: block; font-family: var(--mono); font-size: 10px; color: var(--gray2); margin-top: 2px; }
+.fl-time { font-family: var(--mono); font-size: 15px; color: var(--cyan2); }
+ 
+.badge {
+  display: inline-block; font-family: var(--mono); font-size: 10px;
+  padding: 3px 9px; border-radius: 3px; letter-spacing: .06em; font-weight: 400;
+}
+.b-Scheduled  { background: rgba(59,130,246,.15);   color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
+.b-Departed   { background: rgba(0,230,118,.12);    color: var(--green2); border: 1px solid rgba(0,230,118,.2); }
+.b-Landed     { background: rgba(0,230,118,.12);    color: var(--green2); border: 1px solid rgba(0,230,118,.2); }
+.b-Boarding   { background: rgba(245,166,35,.15);   color: var(--amber2); border: 1px solid rgba(245,166,35,.25); }
+.b-Arriving   { background: rgba(0,212,255,.12);    color: var(--cyan2);  border: 1px solid rgba(0,212,255,.2); }
+.b-Delayed    { background: rgba(255,68,68,.12);    color: var(--red2);   border: 1px solid rgba(255,68,68,.2); }
+.b-Cancelled  { background: rgba(100,116,139,.12);  color: var(--gray);   border: 1px solid rgba(100,116,139,.2); }
+.b-Estimated  { background: rgba(187,134,252,.12);  color: var(--purple); border: 1px solid rgba(187,134,252,.2); }
+.b-Loading    { background: rgba(100,116,139,.08);  color: var(--gray2);  border: 1px solid var(--border); }
+ 
+.empty-state {
+  padding: 80px 20px; text-align: center;
+  font-family: var(--mono); font-size: 12px; color: var(--gray2); letter-spacing: .1em;
+}
+.loading-row {
+  padding: 11px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.skel {
+  background: linear-gradient(90deg, var(--navy3) 25%, var(--navy4) 50%, var(--navy3) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 3px; height: 14px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+ 
+/* ── SEARCH PANEL ──────────────────────────────── */
+.search-bar {
+  background: var(--navy2); border-bottom: 1px solid var(--border);
+  padding: 14px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+  flex-shrink: 0;
+}
+.sf { display: flex; flex-direction: column; gap: 4px; }
+.sf label { font-family: var(--mono); font-size: 9px; color: var(--gray2); letter-spacing: .1em; }
+.sf input, .sf select {
+  font-family: var(--mono); font-size: 12px; color: #e2e8f0;
+  background: var(--navy3); border: 1px solid var(--border);
+  padding: 7px 10px; border-radius: 4px; min-width: 130px; transition: border .2s;
+}
+.sf input:focus, .sf select:focus { outline: none; border-color: var(--amber); }
+.sf select option { background: var(--navy2); }
+.btn {
+  font-family: var(--cond); font-size: 12px; font-weight: 600; letter-spacing: .1em;
+  padding: 7px 18px; border-radius: 4px; cursor: pointer; transition: all .15s; border: 1px solid;
+}
+.btn-primary { background: var(--amber); border-color: var(--amber); color: #000; }
+.btn-primary:hover { background: var(--amber2); }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--gray); }
+.btn-ghost:hover { border-color: var(--gray); color: #e2e8f0; }
+.btn-danger { background: transparent; border-color: rgba(255,68,68,.4); color: var(--red2); }
+.btn-danger:hover { background: rgba(255,68,68,.1); }
+ 
+.s-count { font-family: var(--mono); font-size: 10px; color: var(--gray2); padding: 8px 20px; letter-spacing: .07em; flex-shrink: 0; }
+.search-results { flex: 1; overflow-y: auto; }
+ 
+/* ── ADMIN PANEL ───────────────────────────────── */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(5,1fr);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.stat-box {
+  padding: 14px 18px; border-right: 1px solid var(--border);
+  background: var(--navy2);
+}
+.stat-num { font-family: var(--mono); font-size: 26px; color: var(--amber2); }
+.stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--gray2); letter-spacing: .1em; margin-top: 2px; }
+ 
+.admin-tabs {
+  display: flex; background: var(--navy2); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.atab {
+  font-family: var(--cond); font-size: 12px; font-weight: 600; letter-spacing: .1em;
+  padding: 10px 18px; border: none; cursor: pointer; background: transparent;
+  color: var(--gray); border-bottom: 2px solid transparent; transition: all .2s;
+}
+.atab:hover { color: #e2e8f0; }
+.atab.active { color: var(--amber); border-bottom-color: var(--amber); }
+ 
+.apanel { display: none; flex: 1; overflow-y: auto; }
+.apanel.active { display: block; }
+ 
+/* ADD FORM */
+.add-form { padding: 20px; max-width: 680px; }
+.form-label { font-family: var(--mono); font-size: 9px; color: var(--gray2); letter-spacing: .1em; margin-bottom: 14px; }
+.radio-row { display: flex; gap: 20px; margin-bottom: 16px; }
+.radio-row label { font-family: var(--sans); font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ff { display: flex; flex-direction: column; gap: 5px; }
+.ff label { font-family: var(--mono); font-size: 9px; color: var(--gray2); letter-spacing: .1em; }
+.ff input, .ff select {
+  font-family: var(--mono); font-size: 12px; color: #e2e8f0;
+  background: var(--navy3); border: 1px solid var(--border);
+  padding: 9px 12px; border-radius: 4px; transition: border .2s;
+}
+.ff input:focus, .ff select:focus { outline: none; border-color: var(--amber); }
+.ff select option { background: var(--navy2); }
+.form-actions { display: flex; gap: 10px; margin-top: 16px; }
+ 
+/* EDIT LIST */
+.filter-bar {
+  display: flex; gap: 6px; padding: 10px 20px;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center;
+}
+.chip {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+  padding: 4px 12px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); color: var(--gray2); background: transparent;
+  transition: all .15s;
+}
+.chip:hover, .chip.active { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,.08); }
+ 
+.edit-head {
+  display: grid; grid-template-columns: 80px 1fr 120px 75px 75px;
+  padding: 7px 20px; background: var(--navy3);
+  font-family: var(--mono); font-size: 9px; color: var(--gray2); letter-spacing: .1em;
+  border-bottom: 1px solid var(--border); position: sticky; top: 0;
+}
+.edit-row {
+  display: grid; grid-template-columns: 80px 1fr 120px 75px 75px;
+  padding: 8px 20px; border-bottom: 1px solid var(--border);
+  align-items: center; gap: 8px; transition: background .1s;
+}
+.edit-row:hover { background: var(--glass); }
+.edit-row input, .edit-row select {
+  font-family: var(--mono); font-size: 11px; color: #e2e8f0;
+  background: transparent; border: none; border-bottom: 1px solid transparent;
+  width: 100%; padding: 2px 0; transition: border .15s;
+}
+.edit-row input:focus, .edit-row select:focus { outline: none; border-bottom-color: var(--amber); }
+.edit-row select option { background: var(--navy2); }
+.icon-btn {
+  background: none; border: none; cursor: pointer; font-size: 14px;
+  color: var(--gray2); padding: 3px 5px; border-radius: 3px; transition: color .15s;
+}
+.icon-btn.ok:hover { color: var(--green); }
+.icon-btn.del:hover { color: var(--red); }
+ 
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .05em;
+  padding: 10px 18px; border-radius: 4px; background: var(--navy2);
+  border: 1px solid var(--green); color: var(--green);
+  opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9998;
+}
+.toast.show { opacity: 1; }
+.toast.err  { border-color: var(--red);  color: var(--red2); }
+.toast.warn { border-color: var(--amber); color: var(--amber2); }
+ 
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--navy4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray3); }
+ 
+/* SPINNER */
+.spin {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid var(--navy4); border-top-color: var(--amber);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+</style>
+</head>
+<body>
+ 
+<!-- ══ AIRPORT SELECTOR ══════════════════════════ -->
+<div id="overlay">
+  <div class="sel-wrap">
+    <div class="sel-brand">
+      <div class="logo-line">✦ PAKISTAN AIRPORT MANAGEMENT RECORD ✦</div>
+      <h1>SELECT AIRPORT</h1>
+      <p>CHOOSE A FACILITY TO VIEW LIVE FLIGHT DATA</p>
+    </div>
+    <div class="ap-grid" id="ap-grid"></div>
+    <div class="sel-foot">
+      <div class="sel-chosen" id="sel-chosen">No airport selected</div>
+      <button class="btn-enter" id="btn-enter" disabled onclick="enterApp()">ENTER SYSTEM →</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══ TOPBAR ════════════════════════════════════ -->
+<div id="topbar">
+  <div class="tb-brand">
+    <div class="tb-dot"></div>
+    <div class="tb-name" id="tb-name">PAMR · SELECT AIRPORT</div>
+  </div>
+  <button class="tab-btn active" onclick="switchTab('fids',this)">▲ LIVE BOARD</button>
+  <button class="tab-btn" onclick="switchTab('search',this)">⊙ FLIGHT SEARCH</button>
+  <button class="tab-btn" onclick="switchTab('admin',this)">⚙ ADMIN PANEL</button>
+  <div class="tb-right">
+    <div class="tb-db-status db-demo" id="db-status">
+      <div class="db-dot"></div><span id="db-label">CONNECTING</span>
+    </div>
+    <div class="tb-clock" id="clock">--:--:--</div>
+    <div class="tb-switch" onclick="reopenSelector()">
+      ↺ <span class="tb-iata" id="tb-iata">---</span>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══ MAIN ══════════════════════════════════════ -->
+<div id="main">
+ 
+  <!-- FIDS -->
+  <div class="panel active" id="panel-fids">
+    <div class="fids-controls">
+      <span class="fids-label">DISPLAY MODE</span>
+      <div class="toggle-wrap">
+        <button class="tog active" onclick="switchBoard('dep',this)">▲ DEPARTURES</button>
+        <button class="tog" onclick="switchBoard('arr',this)">▼ ARRIVALS</button>
+      </div>
+      <span class="fids-label" style="margin-left:auto;" id="fids-refresh">AUTO-REFRESH: 30s</span>
+      <button class="btn btn-ghost" onclick="loadBoard()" style="font-size:11px;padding:5px 12px;">↻ REFRESH</button>
+    </div>
+    <div class="fids-body">
+      <div class="board-head">
+        <span>FLIGHT</span><span>AIRLINE</span><span>DESTINATION</span><span>TIME</span><span>STATUS</span>
+      </div>
+      <div id="fids-rows"></div>
+    </div>
+  </div>
+ 
+  <!-- SEARCH -->
+  <div class="panel" id="panel-search">
+    <div class="search-bar">
+      <div class="sf"><label>CALLSIGN</label><input id="s-cs" placeholder="e.g. EK623" oninput="runSearch()"></div>
+      <div class="sf"><label>AIRLINE</label><input id="s-airl" placeholder="e.g. Emirates" oninput="runSearch()"></div>
+      <div class="sf"><label>DESTINATION</label><input id="s-dest" placeholder="e.g. Dubai" oninput="runSearch()"></div>
+      <div class="sf"><label>STATUS</label>
+        <select id="s-stat" onchange="runSearch()">
+          <option value="">ALL STATUSES</option>
+          <option>Scheduled</option><option>Departed</option><option>Landed</option>
+          <option>Boarding</option><option>Arriving</option>
+          <option>Delayed</option><option>Cancelled</option><option>Estimated</option>
+        </select>
+      </div>
+      <div class="sf"><label>FLIGHT TYPE</label>
+        <select id="s-type" onchange="runSearch()">
+          <option value="">ALL</option>
+          <option value="dep">Departures</option>
+          <option value="arr">Arrivals</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost" onclick="clearSearch()">CLEAR</button>
+    </div>
+    <div class="s-count" id="s-count">—</div>
+    <div class="search-results">
+      <div class="board-head">
+        <span>FLIGHT</span><span>AIRLINE</span><span>DESTINATION</span><span>TIME</span><span>STATUS</span>
+      </div>
+      <div id="search-rows"></div>
+    </div>
+  </div>
+ 
+  <!-- ADMIN -->
+  <div class="panel" id="panel-admin">
+    <div class="stats-bar">
+      <div class="stat-box"><div class="stat-num" id="st-dep">—</div><div class="stat-lbl">DEPARTURES</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-arr">—</div><div class="stat-lbl">ARRIVALS</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-del">—</div><div class="stat-lbl">DELAYED</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-can">—</div><div class="stat-lbl">CANCELLED</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-ok">—</div><div class="stat-lbl">ON TIME</div></div>
+    </div>
+    <div class="admin-tabs">
+      <button class="atab active" onclick="switchAdmin('add',this)">+ ADD FLIGHT</button>
+      <button class="atab" onclick="switchAdmin('edep',this)">EDIT DEPARTURES</button>
+      <button class="atab" onclick="switchAdmin('earr',this)">EDIT ARRIVALS</button>
+    </div>
+ 
+    <!-- ADD -->
+    <div class="apanel active" id="ap-add">
+      <div class="add-form">
+        <div class="form-label">NEW FLIGHT RECORD</div>
+        <div class="radio-row">
+          <label><input type="radio" name="ftype" value="dep" checked onchange="updateFormLabels()"> DEPARTURE</label>
+          <label><input type="radio" name="ftype" value="arr" onchange="updateFormLabels()"> ARRIVAL</label>
+        </div>
+        <div class="fg">
+          <div class="ff"><label>CALLSIGN *</label><input id="f-cs" placeholder="e.g. EK623"></div>
+          <div class="ff"><label>AIRLINE *</label><input id="f-airl" placeholder="e.g. Emirates"></div>
+          <div class="ff"><label id="f-cc-lbl">DESTINATION CODE *</label><input id="f-cc" placeholder="e.g. DXB"></div>
+          <div class="ff"><label id="f-name-lbl">DESTINATION NAME *</label><input id="f-name" placeholder="e.g. Dubai"></div>
+          <div class="ff"><label>SCHEDULED TIME *</label><input id="f-time" type="time" step="1"></div>
+          <div class="ff"><label>INITIAL STATUS</label>
+            <select id="f-stat">
+              <option>Scheduled</option><option>Departed</option><option>Landed</option>
+              <option>Boarding</option><option>Delayed</option><option>Cancelled</option><option>Estimated</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addFlight()">ADD FLIGHT</button>
+          <button class="btn btn-ghost" onclick="clearForm()">CLEAR</button>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- EDIT DEP -->
+    <div class="apanel" id="ap-edep">
+      <div class="filter-bar">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--gray2);letter-spacing:.1em;margin-right:4px;">FILTER</span>
+        <button class="chip active" onclick="filterEdit('dep','all',this)">ALL</button>
+        <button class="chip" onclick="filterEdit('dep','Scheduled',this)">SCHEDULED</button>
+        <button class="chip" onclick="filterEdit('dep','Delayed',this)">DELAYED</button>
+        <button class="chip" onclick="filterEdit('dep','Cancelled',this)">CANCELLED</button>
+        <button class="chip" onclick="filterEdit('dep','Departed',this)">DEPARTED</button>
+      </div>
+      <div class="edit-head"><span>FLIGHT</span><span>AIRLINE</span><span>STATUS</span><span>TIME</span><span>ACTIONS</span></div>
+      <div id="edit-dep"></div>
+    </div>
+ 
+    <!-- EDIT ARR -->
+    <div class="apanel" id="ap-earr">
+      <div class="filter-bar">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--gray2);letter-spacing:.1em;margin-right:4px;">FILTER</span>
+        <button class="chip active" onclick="filterEdit('arr','all',this)">ALL</button>
+        <button class="chip" onclick="filterEdit('arr','Scheduled',this)">SCHEDULED</button>
+        <button class="chip" onclick="filterEdit('arr','Delayed',this)">DELAYED</button>
+        <button class="chip" onclick="filterEdit('arr','Estimated',this)">ESTIMATED</button>
+        <button class="chip" onclick="filterEdit('arr','Landed',this)">LANDED</button>
+      </div>
+      <div class="edit-head"><span>FLIGHT</span><span>AIRLINE</span><span>STATUS</span><span>TIME</span><span>ACTIONS</span></div>
+      <div id="edit-arr"></div>
+    </div>
+  </div>
+ 
+</div><!-- /main -->
+ 
+<div class="toast" id="toast"></div>
+ 
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG — change this to your server address
+// ═══════════════════════════════════════════════
+const API = 'http://localhost:3000/api';
+ 
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const AIRPORTS = [
+  {cc:'LHE',icao:'OPLA',name:'Allama Iqbal International',city:'Lahore',   type:'International'},
+  {cc:'KHI',icao:'OPKC',name:'Jinnah International',      city:'Karachi',  type:'International'},
+  {cc:'ISB',icao:'OPIS',name:'Islamabad International',   city:'Islamabad',type:'International'},
+  {cc:'PEW',icao:'OPPS',name:'Bacha Khan International',  city:'Peshawar', type:'International'},
+  {cc:'UET',icao:'OPQT',name:'Quetta International',      city:'Quetta',   type:'International'},
+  {cc:'MUX',icao:'OPMT',name:'Multan International',      city:'Multan',   type:'International'},
+  {cc:'LYP',icao:'OPFA',name:'Faisalabad International',  city:'Faisalabad',type:'International'},
+  {cc:'SKT',icao:'OPST',name:'Sialkot International',     city:'Sialkot',  type:'International'},
+  {cc:'GWD',icao:'OPGD',name:'Gwadar International',      city:'Gwadar',   type:'International'},
+  {cc:'GIL',icao:'OPGT',name:'Gilgit Airport',            city:'Gilgit',   type:'Domestic'},
+  {cc:'BHV',icao:'OPBW',name:'Bahawalpur Airport',        city:'Bahawalpur',type:'Domestic'},
+  {cc:'RYK',icao:'OPRK',name:'Sheikh Zayed International',city:'Rahim Yar Khan',type:'International'},
+  {cc:'SKZ',icao:'OPSK',name:'Sukkur Airport',            city:'Sukkur',   type:'Domestic'},
+  {cc:'KDU',icao:'OPSD',name:'Skardu Airport',            city:'Skardu',   type:'Domestic'},
+];
+ 
+let selectedAirport = null;
+let boardMode       = 'dep';
+let depFilter       = 'all';
+let arrFilter       = 'all';
+let depData         = [];
+let arrData         = [];
+let refreshTimer    = null;
+let countdown       = 30;
+ 
+const STATUSES = ['Scheduled','Departed','Landed','Boarding','Arriving','Delayed','Cancelled','Estimated'];
+ 
+// ═══════════════════════════════════════════════
+//  API HELPERS
+// ═══════════════════════════════════════════════
+async function apiFetch(endpoint, opts = {}) {
+  const res = await fetch(API + endpoint, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || res.statusText);
+  }
+  return res.json();
+}
+ 
+async function checkHealth() {
+  try {
+    const data = await apiFetch('/health');
+    const el   = document.getElementById('db-status');
+    const lb   = document.getElementById('db-label');
+    if (data.db === 'connected') {
+      el.className = 'tb-db-status db-live';
+      lb.textContent = 'DB LIVE';
+    } else {
+      el.className = 'tb-db-status db-demo';
+      lb.textContent = 'DEMO MODE';
+    }
+  } catch {
+    const el = document.getElementById('db-status');
+    el.className = 'tb-db-status db-error';
+    document.getElementById('db-label').textContent = 'OFFLINE';
+  }
+}
+ 
+// ═══════════════════════════════════════════════
+//  AIRPORT SELECTOR
+// ═══════════════════════════════════════════════
+function buildSelector() {
+  const grid = document.getElementById('ap-grid');
+  grid.innerHTML = AIRPORTS.map(a => `
+    <div class="ap-card" id="apc-${a.cc}" onclick="pickAirport('${a.cc}')">
+      <span class="ap-badge ${a.type==='International'?'ap-intl':'ap-dom'}">${a.type==='International'?'INTL':'DOM'}</span>
+      <div class="ap-iata">${a.cc}</div>
+      <div class="ap-name">${a.name}</div>
+      <div class="ap-city">${a.icao} · ${a.city}</div>
+    </div>`).join('');
+}
+ 
+function pickAirport(cc) {
+  selectedAirport = AIRPORTS.find(a => a.cc === cc);
+  document.querySelectorAll('.ap-card').forEach(c => c.classList.remove('sel'));
+  document.getElementById('apc-' + cc).classList.add('sel');
+  document.getElementById('sel-chosen').innerHTML = `Selected: <span>${selectedAirport.name} (${cc})</span>`;
+  document.getElementById('btn-enter').disabled = false;
+}
+ 
+function enterApp() {
+  if (!selectedAirport) return;
+  document.getElementById('overlay').classList.add('gone');
+  document.getElementById('tb-name').textContent = `PAMR · ${selectedAirport.icao} · ${selectedAirport.name.toUpperCase()}`;
+  document.getElementById('tb-iata').textContent = selectedAirport.cc;
+  checkHealth();
+  loadBoard();
+  loadStats();
+  startRefresh();
+}
+ 
+function reopenSelector() {
+  document.getElementById('overlay').classList.remove('gone');
+  if (selectedAirport) {
+    document.querySelectorAll('.ap-card').forEach(c => c.classList.remove('sel'));
+    document.getElementById('apc-' + selectedAirport.cc)?.classList.add('sel');
+  }
+}
+ 
+// ═══════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' +
+    String(n.getMinutes()).padStart(2,'0') + ':' +
+    String(n.getSeconds()).padStart(2,'0') + ' PKT';
+}
+setInterval(updateClock, 1000);
+updateClock();
+ 
+// ═══════════════════════════════════════════════
+//  AUTO-REFRESH
+// ═══════════════════════════════════════════════
+function startRefresh() {
+  clearInterval(refreshTimer);
+  countdown = 30;
+  refreshTimer = setInterval(() => {
+    countdown--;
+    document.getElementById('fids-refresh').textContent = `AUTO-REFRESH: ${countdown}s`;
+    if (countdown <= 0) { loadBoard(); countdown = 30; }
+  }, 1000);
+}
+ 
+// ═══════════════════════════════════════════════
+//  FIDS
+// ═══════════════════════════════════════════════
+function makeRow(f, type) {
+  const dest   = type === 'dep' ? (f.d_name || '') : (f.a_name || '');
+  const code   = type === 'dep' ? (f.cc || '') : (f.ac || '');
+  const status = f.live_status || f.stat || 'Scheduled';
+  return `<div class="fl-row">
+    <span class="fl-cs">${f.cs}</span>
+    <span class="fl-airline">${f.airl}</span>
+    <span class="fl-dest">${dest}<small>${code}</small></span>
+    <span class="fl-time">${(f.times||'').slice(0,5)}</span>
+    <span><span class="badge b-${status}">${status.toUpperCase()}</span></span>
+  </div>`;
+}
+ 
+function showSkeleton(containerId, count = 8) {
+  const html = Array(count).fill(0).map(() => `
+    <div class="loading-row">
+      <div class="skel" style="width:70px"></div>
+      <div class="skel" style="width:140px;margin-left:20px"></div>
+      <div class="skel" style="flex:1;margin-left:20px"></div>
+      <div class="skel" style="width:60px;margin-left:20px"></div>
+      <div class="skel" style="width:90px;margin-left:20px"></div>
+    </div>`).join('');
+  document.getElementById(containerId).innerHTML = html;
+}
+ 
+async function loadBoard() {
+  if (!selectedAirport) return;
+  const container = document.getElementById('fids-rows');
+  showSkeleton('fids-rows');
+ 
+  try {
+    if (boardMode === 'dep') {
+      const res = await apiFetch(`/departures?airport=${selectedAirport.cc}`);
+      depData = res.data || [];
+      container.innerHTML = depData.length
+        ? depData.map(f => makeRow(f, 'dep')).join('')
+        : '<div class="empty-state">NO DEPARTURES FOUND</div>';
+    } else {
+      const res = await apiFetch(`/arrivals?airport=${selectedAirport.cc}`);
+      arrData = res.data || [];
+      container.innerHTML = arrData.length
+        ? arrData.map(f => makeRow(f, 'arr')).join('')
+        : '<div class="empty-state">NO ARRIVALS FOUND</div>';
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state">⚠ ${err.message}<br><br>Check your backend connection at ${API}</div>`;
+  }
+}
+ 
+function switchBoard(mode, btn) {
+  boardMode = mode;
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadBoard();
+}
+ 
+// ═══════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════
+async function runSearch() {
+  if (!selectedAirport) return;
+  const cs   = document.getElementById('s-cs').value.trim();
+  const airl = document.getElementById('s-airl').value.trim();
+  const dest = document.getElementById('s-dest').value.trim();
+  const stat = document.getElementById('s-stat').value;
+  const type = document.getElementById('s-type').value;
+ 
+  const params = new URLSearchParams();
+  params.set('airport', selectedAirport.cc);
+  if (cs)   params.set('search', cs);
+  if (airl) params.set('airline', airl);
+  if (stat) params.set('status', stat);
+ 
+  try {
+    let results = [];
+    if (!type || type === 'dep') {
+      const r = await apiFetch(`/departures?${params}`);
+      results.push(...(r.data || []).map(f => ({...f, _type: 'dep'})));
+    }
+    if (!type || type === 'arr') {
+      const r = await apiFetch(`/arrivals?${params}`);
+      results.push(...(r.data || []).map(f => ({...f, _type: 'arr'})));
+    }
+    if (dest) {
+      results = results.filter(f =>
+        (f.d_name || f.a_name || '').toLowerCase().includes(dest.toLowerCase())
+      );
+    }
+    results.sort((a, b) => (a.times || '').localeCompare(b.times || ''));
+    document.getElementById('s-count').textContent = `${results.length} flight${results.length !== 1 ? 's' : ''} found`;
+    document.getElementById('search-rows').innerHTML = results.length
+      ? results.map(f => makeRow(f, f._type)).join('')
+      : '<div class="empty-state">NO MATCHING FLIGHTS</div>';
+  } catch (err) {
+    document.getElementById('search-rows').innerHTML = `<div class="empty-state">⚠ ${err.message}</div>`;
+  }
+}
+ 
+function clearSearch() {
+  ['s-cs','s-airl','s-dest'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('s-stat').value = '';
+  document.getElementById('s-type').value = '';
+  document.getElementById('s-count').textContent = '—';
+  document.getElementById('search-rows').innerHTML = '';
+}
+ 
+// ═══════════════════════════════════════════════
+//  ADMIN — STATS
+// ═══════════════════════════════════════════════
+async function loadStats() {
+  if (!selectedAirport) return;
+  try {
+    const r = await apiFetch(`/stats?airport=${selectedAirport.cc}`);
+    const d = r.data;
+    document.getElementById('st-dep').textContent = d.departures;
+    document.getElementById('st-arr').textContent = d.arrivals;
+    document.getElementById('st-del').textContent = d.delayed;
+    document.getElementById('st-can').textContent = d.cancelled;
+    document.getElementById('st-ok').textContent  = d.ontime;
+  } catch {}
+}
+ 
+// ═══════════════════════════════════════════════
+//  ADMIN — ADD FLIGHT
+// ═══════════════════════════════════════════════
+function updateFormLabels() {
+  const t = document.querySelector('input[name=ftype]:checked').value;
+  document.getElementById('f-cc-lbl').textContent   = t === 'dep' ? 'DESTINATION CODE *' : 'ORIGIN CODE *';
+  document.getElementById('f-name-lbl').textContent = t === 'dep' ? 'DESTINATION NAME *' : 'ORIGIN NAME *';
+}
+ 
+async function addFlight() {
+  const type  = document.querySelector('input[name=ftype]:checked').value;
+  const cs    = document.getElementById('f-cs').value.trim();
+  const airl  = document.getElementById('f-airl').value.trim();
+  const cc    = document.getElementById('f-cc').value.trim().toUpperCase();
+  const name  = document.getElementById('f-name').value.trim();
+  const time  = document.getElementById('f-time').value;
+  const stat  = document.getElementById('f-stat').value;
+ 
+  if (!cs || !airl || !cc || !name || !time) { toast('Fill all required fields', 'err'); return; }
+  if (!selectedAirport) { toast('Select an airport first', 'err'); return; }
+ 
+  const times = time.length === 5 ? time + ':00' : time;
+ 
+  try {
+    if (type === 'dep') {
+      await apiFetch('/departures', {
+        method: 'POST',
+        body: JSON.stringify({ cs, airl, cc, dc: selectedAirport.cc, d_name: name, times, stat }),
+      });
+    } else {
+      await apiFetch('/arrivals', {
+        method: 'POST',
+        body: JSON.stringify({ cs, airl, ac: selectedAirport.cc, cc, a_name: name, times, stat }),
+      });
+    }
+    toast(`Flight ${cs} added successfully`);
+    clearForm(); loadStats(); loadBoard();
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+}
+ 
+function clearForm() {
+  ['f-cs','f-airl','f-cc','f-name'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-time').value = '';
+  document.getElementById('f-stat').value = 'Scheduled';
+}
+ 
+// ═══════════════════════════════════════════════
+//  ADMIN — EDIT LIST
+// ═══════════════════════════════════════════════
+async function loadEditList(type) {
+  if (!selectedAirport) return;
+  const filter = type === 'dep' ? depFilter : arrFilter;
+  const el     = document.getElementById('edit-' + type);
+  el.innerHTML = '<div class="empty-state"><div class="spin"></div></div>';
+ 
+  try {
+    const params = new URLSearchParams({ airport: selectedAirport.cc });
+    if (filter !== 'all') params.set('status', filter);
+    const endpoint = type === 'dep' ? '/departures' : '/arrivals';
+    const r = await apiFetch(`${endpoint}?${params}`);
+    const data = (r.data || []).sort((a,b) => (a.times||'').localeCompare(b.times||''));
+ 
+    const nameKey = type === 'dep' ? 'd_name' : 'a_name';
+ 
+    if (!data.length) { el.innerHTML = '<div class="empty-state">NO FLIGHTS MATCH FILTER</div>'; return; }
+ 
+    el.innerHTML = data.map(f => `
+      <div class="edit-row" id="er-${type}-${f.cs}">
+        <span class="fl-cs" style="font-size:12px">${f.cs}</span>
+        <input value="${f.airl}" id="ei-a-${type}-${f.cs}">
+        <select id="ei-s-${type}-${f.cs}">
+          ${STATUSES.map(s => `<option${f.stat===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <input value="${(f.times||'').slice(0,5)}" id="ei-t-${type}-${f.cs}" style="width:58px">
+        <span>
+          <button class="icon-btn ok" title="Save" onclick="saveEdit('${type}','${f.cs}','${f[nameKey] || ''}','${type==='dep'?f.cc:f.ac}')">✓</button>
+          <button class="icon-btn del" title="Delete" onclick="deleteRow('${type}','${f.cs}')">✕</button>
+        </span>
+      </div>`).join('');
+  } catch (err) {
+    el.innerHTML = `<div class="empty-state">⚠ ${err.message}</div>`;
+  }
+}
+ 
+async function saveEdit(type, cs, name, code) {
+  const airl  = document.getElementById(`ei-a-${type}-${cs}`).value;
+  const stat  = document.getElementById(`ei-s-${type}-${cs}`).value;
+  const tVal  = document.getElementById(`ei-t-${type}-${cs}`).value;
+  const times = tVal.length === 5 ? tVal + ':00' : tVal;
+ 
+  try {
+    if (type === 'dep') {
+      await apiFetch(`/departures/${cs}`, {
+        method: 'PUT',
+        body: JSON.stringify({ airl, cc: code, d_name: name, times, stat }),
+      });
+    } else {
+      await apiFetch(`/arrivals/${cs}`, {
+        method: 'PUT',
+        body: JSON.stringify({ airl, ac: code, a_name: name, times, stat }),
+      });
+    }
+    toast(`${cs} updated`);
+    loadStats(); loadBoard();
+  } catch (err) { toast(err.message, 'err'); }
+}
+ 
+async function deleteRow(type, cs) {
+  if (!confirm(`Delete flight ${cs}?`)) return;
+  try {
+    const endpoint = type === 'dep' ? `/departures/${cs}` : `/arrivals/${cs}`;
+    await apiFetch(endpoint, { method: 'DELETE' });
+    toast(`${cs} removed`);
+    loadEditList(type); loadStats(); loadBoard();
+  } catch (err) { toast(err.message, 'err'); }
+}
+ 
+function filterEdit(type, val, btn) {
+  if (type === 'dep') depFilter = val; else arrFilter = val;
+  btn.closest('.filter-bar').querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  loadEditList(type);
+}
+ 
+// ═══════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'admin') { loadStats(); loadEditList('dep'); loadEditList('arr'); }
+  if (name === 'search') { clearSearch(); }
+}
+ 
+function switchAdmin(tab, btn) {
+  document.querySelectorAll('.apanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.atab').forEach(b => b.classList.remove('active'));
+  document.getElementById('ap-' + tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'edep') loadEditList('dep');
+  if (tab === 'earr') loadEditList('arr');
+}
+ 
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type = '') {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  toastTimer = setTimeout(() => t.className = 'toast', 3000);
+}
+ 
+// ── INIT ──────────────────────────────────────────
+buildSelector();
+</script>
+</body>
+</html>
